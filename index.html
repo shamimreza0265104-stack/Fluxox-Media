@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,6 +14,8 @@
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
     </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         /* ===== ROOT ===== */
@@ -56,7 +57,6 @@
             background: #e8e4e6;
         }
 
-        /* ===== APP SHELL – FULL SCREEN FIX ===== */
         #app {
             width: 100%;
             height: 100vh;
@@ -94,7 +94,6 @@
             }
         }
 
-        /* ===== SCREENS – FLEX LAYOUT FIX ===== */
         .screen {
             display: none;
             flex: 1;
@@ -190,10 +189,6 @@
         }
         #authScreen .auth-box .btn-google:active {
             transform: scale(0.97);
-        }
-        #authScreen .auth-box .btn-google img {
-            width: 20px;
-            height: 20px;
         }
         #authScreen .auth-box .divider {
             display: flex;
@@ -331,6 +326,38 @@
             color: var(--pink);
             letter-spacing: -0.3px;
         }
+        .feed-header .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .feed-header .notif-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: var(--gray);
+            cursor: pointer;
+            position: relative;
+            padding: 4px;
+            transition: 0.15s;
+        }
+        .feed-header .notif-btn:hover {
+            color: var(--pink);
+        }
+        .feed-header .notif-btn .notif-dot {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            width: 10px;
+            height: 10px;
+            background: var(--pink);
+            border-radius: 50%;
+            border: 2px solid var(--bg);
+            display: none;
+        }
+        .feed-header .notif-btn .notif-dot.show {
+            display: block;
+        }
         .feed-header .create-btn {
             background: var(--pink-gradient);
             color: #fff;
@@ -356,7 +383,7 @@
             stroke-width: 2.5;
         }
 
-        /* ===== POST CARD ===== */
+        /* ===== POST CARD (NO COMMENTS) ===== */
         .post-card {
             background: var(--card-bg);
             border-radius: var(--radius);
@@ -396,18 +423,6 @@
         .post-card .post-header .info .time {
             font-size: 12px;
             color: var(--gray);
-        }
-        .post-card .post-header .mute-btn {
-            background: none;
-            border: none;
-            color: var(--gray);
-            cursor: pointer;
-            padding: 4px 6px;
-            border-radius: 8px;
-            transition: 0.15s;
-        }
-        .post-card .post-header .mute-btn:hover {
-            background: var(--light-gray);
         }
         .post-card .post-content {
             font-size: 15px;
@@ -460,61 +475,6 @@
         .post-card .post-actions button.liked svg {
             fill: var(--pink);
         }
-        .post-card .comments-section {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border);
-        }
-        .post-card .comments-section .comment-input {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-        .post-card .comments-section .comment-input input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 1.5px solid var(--border);
-            border-radius: 20px;
-            font-size: 14px;
-            outline: none;
-            background: var(--bg);
-        }
-        .post-card .comments-section .comment-input input:focus {
-            border-color: var(--pink);
-        }
-        .post-card .comments-section .comment-input button {
-            background: var(--pink-gradient);
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .post-card .comment-item {
-            font-size: 14px;
-            padding: 4px 0;
-            display: flex;
-            align-items: baseline;
-            gap: 6px;
-        }
-        .post-card .comment-item .cname {
-            font-weight: 600;
-            color: var(--pink);
-            cursor: pointer;
-        }
-        .post-card .comment-item .cname:hover {
-            text-decoration: underline;
-        }
-        .post-card .comment-item .ctext {
-            color: #1c1c1e;
-        }
-        .post-card .comment-item .ctime {
-            font-size: 11px;
-            color: var(--gray);
-            margin-left: auto;
-        }
 
         /* ===== REELS ===== */
         .reels-container {
@@ -547,6 +507,8 @@
             background: #000;
             display: block;
         }
+
+        /* ===== REEL OVERLAY – LIKE BUTTON TOP-RIGHT ===== */
         .reel-item .reel-overlay {
             position: absolute;
             bottom: 20px;
@@ -583,47 +545,61 @@
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
             pointer-events: auto;
         }
-        .reel-item .reel-overlay .reel-actions {
+
+        /* BIG LIKE BUTTON – TOP-RIGHT */
+        .reel-item .reel-like-big {
+            position: absolute;
+            top: 70px;
+            right: 16px;
+            z-index: 5;
             display: flex;
-            gap: 16px;
-            margin-top: 4px;
-            pointer-events: auto;
-        }
-        .reel-item .reel-overlay .reel-actions button {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(6px);
-            border: none;
-            color: #fff;
-            padding: 6px 14px;
-            border-radius: 30px;
-            display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            font-weight: 500;
+            gap: 2px;
+            pointer-events: auto;
             cursor: pointer;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            padding: 10px 10px 8px;
+            border-radius: 30px;
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            transition: 0.2s;
+            min-width: 60px;
+        }
+        .reel-item .reel-like-big:active {
+            transform: scale(0.88);
+        }
+        .reel-item .reel-like-big svg {
+            width: 34px;
+            height: 34px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 2;
             transition: 0.2s;
         }
-        .reel-item .reel-overlay .reel-actions button:active {
-            transform: scale(0.92);
-        }
-        .reel-item .reel-overlay .reel-actions button.liked {
-            color: var(--pink);
-        }
-        .reel-item .reel-overlay .reel-actions button svg {
-            width: 18px;
-            height: 18px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2;
-        }
-        .reel-item .reel-overlay .reel-actions button.liked svg {
+        .reel-item .reel-like-big.liked svg {
             fill: var(--pink);
+            stroke: var(--pink);
         }
+        .reel-item .reel-like-big .like-count {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+            margin-top: 0px;
+        }
+        .reel-item .reel-like-big .like-label {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* sound toggle */
         .reel-sound-toggle {
             position: absolute;
             top: 20px;
-            right: 16px;
+            left: 16px;
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(6px);
             border: none;
@@ -810,7 +786,7 @@
             flex-shrink: 0;
         }
 
-        /* ===== CHAT VIEW ===== */
+        /* ===== CHAT ===== */
         #chatScreen {
             background: var(--bg);
             position: absolute;
@@ -1024,7 +1000,7 @@
             opacity: 0.8;
         }
 
-        /* ===== PROFILE ===== */
+        /* ===== PROFILE (original layout) ===== */
         #profileScreen {
             display: none;
             flex-direction: column;
@@ -1042,7 +1018,8 @@
             overflow: hidden;
             min-height: 0;
         }
-        #profileScreen #profileContent .profile-header {
+
+        .profile-header {
             flex-shrink: 0;
             padding: 20px 20px 12px;
             background: var(--card-bg);
@@ -1053,7 +1030,7 @@
             text-align: center;
             gap: 6px;
         }
-        #profileScreen #profileContent .profile-header .big-avatar {
+        .profile-header .big-avatar {
             width: 80px;
             height: 80px;
             border-radius: 50%;
@@ -1063,43 +1040,43 @@
             cursor: pointer;
             transition: 0.15s;
         }
-        #profileScreen #profileContent .profile-header .big-avatar:hover {
+        .profile-header .big-avatar:hover {
             opacity: 0.8;
         }
-        #profileScreen #profileContent .profile-header .pname {
+        .profile-header .pname {
             font-size: 20px;
             font-weight: 700;
         }
-        #profileScreen #profileContent .profile-header .pusername {
+        .profile-header .pusername {
             font-size: 14px;
             color: var(--gray);
         }
-        #profileScreen #profileContent .profile-header .pbio {
+        .profile-header .pbio {
             font-size: 14px;
             color: #1c1c1e;
             max-width: 280px;
         }
-        #profileScreen #profileContent .profile-header .stats-row {
+        .profile-header .stats-row {
             display: flex;
             gap: 24px;
             margin: 4px 0;
             font-size: 14px;
             color: var(--gray);
         }
-        #profileScreen #profileContent .profile-header .stats-row span {
+        .profile-header .stats-row span {
             cursor: default;
         }
-        #profileScreen #profileContent .profile-header .stats-row strong {
+        .profile-header .stats-row strong {
             color: #1c1c1e;
         }
-        #profileScreen #profileContent .profile-header .profile-actions {
+        .profile-header .profile-actions {
             display: flex;
             gap: 10px;
             margin-top: 8px;
             flex-wrap: wrap;
             justify-content: center;
         }
-        #profileScreen #profileContent .profile-header .profile-actions button {
+        .profile-header .profile-actions button {
             padding: 8px 22px;
             border: none;
             border-radius: 30px;
@@ -1108,34 +1085,39 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        #profileScreen #profileContent .profile-header .profile-actions .edit-btn {
+        .profile-header .profile-actions .edit-btn {
             background: var(--pink-gradient);
             color: #fff;
         }
-        #profileScreen #profileContent .profile-header .profile-actions .follow-btn {
+        .profile-header .profile-actions .follow-btn {
             background: var(--pink-gradient);
             color: #fff;
         }
-        #profileScreen #profileContent .profile-header .profile-actions .follow-btn.following {
+        .profile-header .profile-actions .follow-btn.following {
             background: var(--light-gray);
             color: var(--gray);
         }
-        #profileScreen #profileContent .profile-header .profile-actions .logout-btn {
+        .profile-header .profile-actions .logout-btn {
             background: none;
             color: var(--gray);
             border: 1.5px solid var(--border);
         }
-        #profileScreen #profileContent .profile-header .profile-actions button:active {
+        .profile-header .profile-actions .dashboard-btn {
+            background: var(--pink-gradient);
+            color: #fff;
+        }
+        .profile-header .profile-actions button:active {
             transform: scale(0.94);
         }
 
-        #profileScreen #profileContent .profile-tabs {
+        /* profile tabs */
+        .profile-tabs {
             display: flex;
             background: var(--card-bg);
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
         }
-        #profileScreen #profileContent .profile-tabs button {
+        .profile-tabs button {
             flex: 1;
             padding: 12px 0;
             border: none;
@@ -1147,15 +1129,15 @@
             border-bottom: 3px solid transparent;
             transition: 0.15s;
         }
-        #profileScreen #profileContent .profile-tabs button.active {
+        .profile-tabs button.active {
             color: var(--pink);
             border-bottom-color: var(--pink);
         }
-        #profileScreen #profileContent .profile-tabs button:active {
+        .profile-tabs button:active {
             opacity: 0.6;
         }
 
-        #profileScreen #profileContent .profile-content {
+        .profile-content {
             flex: 1;
             overflow-y: auto;
             padding: 8px 16px 20px;
@@ -1165,14 +1147,14 @@
             -webkit-overflow-scrolling: touch;
             min-height: 0;
         }
-        #profileScreen #profileContent .profile-content::-webkit-scrollbar {
+        .profile-content::-webkit-scrollbar {
             width: 4px;
         }
-        #profileScreen #profileContent .profile-content::-webkit-scrollbar-thumb {
+        .profile-content::-webkit-scrollbar-thumb {
             background: var(--pink-light);
             border-radius: 4px;
         }
-        #profileScreen #profileContent .profile-content .empty-state {
+        .profile-content .empty-state {
             text-align: center;
             color: var(--gray);
             padding: 40px 0;
@@ -1270,6 +1252,91 @@
             fill: var(--pink);
         }
 
+        /* ===== DASHBOARD SCREEN ===== */
+        #dashboardScreen {
+            display: none;
+            flex-direction: column;
+            background: var(--bg);
+        }
+        #dashboardScreen.active {
+            display: flex;
+        }
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .dashboard-header .back-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--gray);
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        .dashboard-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--pink);
+        }
+        .dashboard-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .dashboard-content .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .dashboard-content .stats-grid .stat-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 14px 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .dashboard-content .stats-grid .stat-card .stat-icon {
+            font-size: 22px;
+            color: var(--pink);
+            margin-bottom: 4px;
+        }
+        .dashboard-content .stats-grid .stat-card .stat-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1c1c1e;
+        }
+        .dashboard-content .stats-grid .stat-card .stat-label {
+            font-size: 11px;
+            color: var(--gray);
+            margin-top: 2px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .dashboard-content .chart-container {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            height: 220px;
+            position: relative;
+        }
+        .dashboard-content .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
         /* ===== STORY RING ===== */
         .story-ring {
             display: flex;
@@ -1335,7 +1402,7 @@
             background: var(--light-gray);
         }
 
-        /* ===== STORY VIEWER OVERLAY ===== */
+        /* ===== STORY VIEWER ===== */
         .story-viewer-overlay {
             display: none;
             position: fixed;
@@ -1470,7 +1537,111 @@
             white-space: nowrap;
         }
 
-        /* ===== MODAL ===== */
+        /* ===== NOTIFICATION PANEL ===== */
+        .notif-panel {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 12px;
+            width: 320px;
+            max-width: calc(100vw - 24px);
+            max-height: 420px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border);
+            z-index: 50;
+            overflow: hidden;
+            flex-direction: column;
+        }
+        .notif-panel.open {
+            display: flex;
+        }
+        .notif-panel .notif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .notif-panel .notif-header h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1c1c1e;
+        }
+        .notif-panel .notif-header .mark-read {
+            font-size: 12px;
+            color: var(--pink);
+            cursor: pointer;
+            font-weight: 600;
+            background: none;
+            border: none;
+        }
+        .notif-panel .notif-header .mark-read:active {
+            opacity: 0.6;
+        }
+        .notif-panel .notif-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .notif-panel .notif-list .notif-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            transition: 0.1s;
+            cursor: default;
+        }
+        .notif-panel .notif-list .notif-item:last-child {
+            border-bottom: none;
+        }
+        .notif-panel .notif-list .notif-item .notif-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--light-gray);
+            flex-shrink: 0;
+        }
+        .notif-panel .notif-list .notif-item .notif-body {
+            flex: 1;
+            font-size: 13px;
+            color: #1c1c1e;
+            line-height: 1.4;
+        }
+        .notif-panel .notif-list .notif-item .notif-body strong {
+            font-weight: 600;
+            color: var(--pink);
+            cursor: pointer;
+        }
+        .notif-panel .notif-list .notif-item .notif-body .notif-time {
+            font-size: 11px;
+            color: var(--gray);
+            display: block;
+            margin-top: 2px;
+        }
+        .notif-panel .notif-list .notif-item.unread {
+            background: var(--pink-light);
+        }
+        .notif-panel .notif-list .notif-item .notif-close {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+        }
+        .notif-panel .notif-empty {
+            padding: 30px 20px;
+            text-align: center;
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        /* ===== MODALS ===== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -1648,7 +1819,7 @@
             }
         }
 
-        /* ===== INDEX ERROR BANNER ===== */
+        /* ===== INDEX BANNER ===== */
         .index-banner {
             display: none;
             background: #fff3cd;
@@ -1683,7 +1854,6 @@
             opacity: 0.7;
         }
 
-        /* scrollbar for chat */
         .chat-messages::-webkit-scrollbar {
             width: 3px;
         }
@@ -1697,20 +1867,46 @@
             scrollbar-width: none;
         }
 
-        .shimmer {
-            background: var(--light-gray);
-            border-radius: 8px;
-            animation: shimmer 1.2s ease-in-out infinite;
-        }
-        @keyframes shimmer {
-            0% {
-                opacity: 0.6;
+        /* ===== RESPONSIVE TWEAKS ===== */
+        @media (max-width: 430px) {
+            .notif-panel {
+                top: 56px;
+                right: 8px;
+                width: calc(100vw - 16px);
+                max-height: 360px;
             }
-            50% {
-                opacity: 1;
+            .reel-item .reel-like-big {
+                top: 60px;
+                right: 10px;
+                padding: 8px 8px 6px;
+                min-width: 50px;
             }
-            100% {
-                opacity: 0.6;
+            .reel-item .reel-like-big svg {
+                width: 28px;
+                height: 28px;
+            }
+            .reel-item .reel-like-big .like-count {
+                font-size: 11px;
+            }
+            .reel-item .reel-like-big .like-label {
+                font-size: 8px;
+            }
+            .dashboard-content .stats-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 8px;
+            }
+            .dashboard-content .stats-grid .stat-card {
+                padding: 10px 4px;
+            }
+            .dashboard-content .stats-grid .stat-card .stat-number {
+                font-size: 17px;
+            }
+            .dashboard-content .stats-grid .stat-card .stat-icon {
+                font-size: 18px;
+            }
+            .dashboard-content .chart-container {
+                height: 180px;
+                padding: 12px;
             }
         }
     </style>
@@ -1727,7 +1923,6 @@
                 <p class="subtitle">Connect. Share. Inspire.</p>
                 <div id="authError" class="error-msg"></div>
 
-                <!-- Google Sign-In -->
                 <button id="googleSignInBtn" class="btn-google">
                     <svg width="20" height="20" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -1757,11 +1952,28 @@
             <div id="homeScreen" class="screen active">
                 <div class="feed-header">
                     <h2>Fluxox</h2>
-                    <button class="create-btn" id="createPostBtn">
-                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Post
-                    </button>
+                    <div class="header-actions">
+                        <button class="notif-btn" id="notifBtn" title="Notifications">
+                            <i class="fas fa-bell" style="font-size:22px;"></i>
+                            <span class="notif-dot" id="notifDot"></span>
+                        </button>
+                        <button class="create-btn" id="createPostBtn">
+                            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Post
+                        </button>
+                    </div>
                 </div>
+                <!-- Notification Panel -->
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-header">
+                        <h4>Notifications</h4>
+                        <button class="mark-read" id="markAllRead">Mark all read</button>
+                    </div>
+                    <div class="notif-list" id="notifList">
+                        <div class="notif-empty">No notifications yet</div>
+                    </div>
+                </div>
+
                 <div id="indexBanner" class="index-banner">
                     <p>⚠️ Missing Firestore index. Click to create it.</p>
                     <a id="indexLink" href="#" target="_blank">Fix Index</a>
@@ -1773,7 +1985,6 @@
             <!-- ===== REELS ===== -->
             <div id="reelsScreen" class="screen">
                 <div class="reels-container" id="reelsContainer"></div>
-                <!-- FAB added via JS -->
             </div>
 
             <!-- ===== PEOPLE ===== -->
@@ -1796,6 +2007,17 @@
             <!-- ===== PROFILE ===== -->
             <div id="profileScreen" class="screen">
                 <div id="profileContent"></div>
+            </div>
+
+            <!-- ===== DASHBOARD ===== -->
+            <div id="dashboardScreen" class="screen">
+                <div class="dashboard-header">
+                    <button class="back-btn" id="dashboardBackBtn">‹</button>
+                    <h2>Professional Dashboard</h2>
+                </div>
+                <div class="dashboard-content" id="dashboardContent">
+                    <!-- Stats & chart will be rendered here -->
+                </div>
             </div>
 
             <!-- ===== CHAT (overlay) ===== -->
@@ -1915,7 +2137,7 @@
             </div>
         </div>
 
-        <!-- ===== STORY VIEWER OVERLAY ===== -->
+        <!-- ===== STORY VIEWER ===== -->
         <div class="story-viewer-overlay" id="storyViewer">
             <button class="sv-close" id="svClose">✕</button>
             <div class="sv-container" id="svContainer">
@@ -1936,7 +2158,7 @@
             </div>
         </div>
 
-        <!-- ===== TOAST CONTAINER ===== -->
+        <!-- ===== TOAST ===== -->
         <div class="toast-container" id="toastContainer"></div>
     </div>
 
@@ -1992,6 +2214,9 @@
             const peopleContainer = $('peopleContainer');
             const messagesContainer = $('messagesContainer');
             const profileContent = $('profileContent');
+            const dashboardContent = $('dashboardContent');
+            const dashboardScreen = $('dashboardScreen');
+            const dashboardBackBtn = $('dashboardBackBtn');
             const chatScreen = $('chatScreen');
             const chatMessages = $('chatMessages');
             const chatInput = $('chatInput');
@@ -2006,6 +2231,11 @@
             const storyRing = $('storyRing');
             const indexBanner = $('indexBanner');
             const indexLink = $('indexLink');
+            const notifBtn = $('notifBtn');
+            const notifPanel = $('notifPanel');
+            const notifList = $('notifList');
+            const notifDot = $('notifDot');
+            const markAllRead = $('markAllRead');
 
             const navItems = qsa('.nav-item');
             const screens = {
@@ -2014,6 +2244,7 @@
                 people: $('peopleScreen'),
                 messages: $('messagesScreen'),
                 profile: $('profileScreen'),
+                dashboard: dashboardScreen,
             };
 
             const toastContainer = $('toastContainer');
@@ -2055,11 +2286,10 @@
             let isAuthMode = true;
             let currentStoryData = null;
             let storyViewerUnsub = null;
-            let lastReelSnapshot = null; // store latest reel snapshot for random shuffle
-
-            // ===== Global mute state for reels =====
             let isAllMuted = true;
-            let scrollTimeout = null;
+            let chartInstance = null;
+
+            const reelElements = new Map();
 
             // ============================================================
             // HELPERS
@@ -2126,7 +2356,6 @@
                 return div.innerHTML;
             }
 
-            // ===== Fisher-Yates shuffle =====
             function shuffleArray(arr) {
                 const a = [...arr];
                 for (let i = a.length - 1; i > 0; i--) {
@@ -2136,7 +2365,6 @@
                 return a;
             }
 
-            // ===== Update all reels mute state =====
             function updateAllReelsMute() {
                 const container = reelsContainer;
                 const videos = container.querySelectorAll('video');
@@ -2180,9 +2408,6 @@
                 });
             }
 
-            // ============================================================
-            // REEL FILE SIZE CHECK (30MB max)
-            // ============================================================
             function checkReelFileSize(file) {
                 const sizeMB = file.size / (1024 * 1024);
                 if (sizeMB > MAX_REEL_SIZE_MB) {
@@ -2226,12 +2451,15 @@
                     chatScreen.classList.remove('open');
                     chatPartnerId = null;
                     storyViewer.classList.remove('open');
+                    notifPanel.classList.remove('open');
+                    reelElements.clear();
+                    if (chartInstance) { chartInstance.destroy();
+                        chartInstance = null; }
                 }
             }
 
             auth.onAuthStateChanged(updateAuthUI);
 
-            // Google Sign-In
             googleSignInBtn.addEventListener('click', async () => {
                 try {
                     const provider = new firebase.auth.GoogleAuthProvider();
@@ -2262,7 +2490,6 @@
                 }
             });
 
-            // Email/Password Auth Toggle
             authToggle.addEventListener('click', () => {
                 isAuthMode = !isAuthMode;
                 authSubmit.textContent = isAuthMode ? 'Sign In' : 'Sign Up';
@@ -2339,6 +2566,7 @@
                 storyViewer.classList.remove('open');
                 if (storyViewerUnsub) { storyViewerUnsub();
                     storyViewerUnsub = null; }
+                notifPanel.classList.remove('open');
 
                 Object.keys(screens).forEach(k => {
                     screens[k].classList.toggle('active', k === tab);
@@ -2350,6 +2578,7 @@
                 else if (tab === 'people') loadPeople();
                 else if (tab === 'messages') loadMessages();
                 else if (tab === 'profile') loadProfile(currentUser ? currentUser.uid : null);
+                else if (tab === 'dashboard') loadDashboard();
 
                 if (tab === 'profile') {
                     setTimeout(() => {
@@ -2378,6 +2607,7 @@
                     }
                     await loadFollowing();
                     loadNotificationBadge();
+                    loadNotifications();
                     switchTab('home');
                 } catch (err) {
                     console.warn('loadUserData error:', err);
@@ -2409,8 +2639,10 @@
                         if (count > 0) {
                             badge.textContent = count > 9 ? '9+' : count;
                             badge.classList.add('show');
+                            notifDot.classList.add('show');
                         } else {
                             badge.classList.remove('show');
+                            notifDot.classList.remove('show');
                         }
                     }, err => {
                         console.warn('Notif badge error:', err);
@@ -2418,6 +2650,119 @@
                     });
                 notificationsUnsub = unsub;
             }
+
+            // ============================================================
+            // NOTIFICATIONS
+            // ============================================================
+            function loadNotifications() {
+                if (!currentUser) return;
+                db.collection('notifications')
+                    .where('toUserId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .limit(30)
+                    .onSnapshot(snap => {
+                        renderNotifications(snap);
+                    }, err => {
+                        console.warn('Notifications load error:', err);
+                        showIndexBanner(err);
+                    });
+            }
+
+            function renderNotifications(snap) {
+                const list = notifList;
+                list.innerHTML = '';
+                if (snap.empty) {
+                    list.innerHTML = '<div class="notif-empty">No notifications yet</div>';
+                    return;
+                }
+                let hasUnread = false;
+                snap.forEach(doc => {
+                    const n = { id: doc.id, ...doc.data() };
+                    if (!n.read) hasUnread = true;
+                    const item = document.createElement('div');
+                    item.className = 'notif-item' + (n.read ? '' : ' unread');
+                    const avatar = n.fromUserPhoto || getAvatarUrl(n.fromUserId);
+                    const displayName = n.fromUserName || 'User';
+                    let text = '';
+                    const timeStr = n.createdAt ? timeAgo(n.createdAt) : '';
+                    switch (n.type) {
+                        case 'like':
+                            text = `liked your post`;
+                            break;
+                        case 'comment':
+                            text = `commented on your post`;
+                            break;
+                        case 'follow':
+                            text = `started following you`;
+                            break;
+                        case 'message':
+                            text = `sent you a message`;
+                            break;
+                        case 'story_like':
+                            text = `liked your story`;
+                            break;
+                        default:
+                            text = `interacted with you`;
+                    }
+                    item.innerHTML = `
+                <img class="notif-avatar" src="${avatar}" alt="" onerror="this.src='${getAvatarUrl(n.fromUserId)}'" />
+                <div class="notif-body">
+                  <strong data-uid="${n.fromUserId}">${displayName}</strong> ${text}
+                  <span class="notif-time">${timeStr}</span>
+                </div>
+                <button class="notif-close" data-nid="${n.id}">✕</button>
+              `;
+                    item.querySelector('strong').addEventListener('click', () => {
+                        const uid = item.querySelector('strong').dataset.uid;
+                        if (uid && uid !== currentUser?.uid) {
+                            openUserProfile(uid);
+                        } else if (uid === currentUser?.uid) {
+                            switchTab('profile');
+                        }
+                        notifPanel.classList.remove('open');
+                    });
+                    item.querySelector('.notif-close').addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const nid = e.target.dataset.nid;
+                        try {
+                            await db.collection('notifications').doc(nid).delete();
+                        } catch (err) { console.warn('Delete notif error:', err); }
+                    });
+                    list.appendChild(item);
+                });
+                if (hasUnread) {
+                    notifDot.classList.add('show');
+                } else {
+                    notifDot.classList.remove('show');
+                }
+            }
+
+            notifBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notifPanel.classList.toggle('open');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!notifPanel.contains(e.target) && e.target !== notifBtn && !notifBtn.contains(e.target)) {
+                    notifPanel.classList.remove('open');
+                }
+            });
+
+            markAllRead.addEventListener('click', async () => {
+                if (!currentUser) return;
+                try {
+                    const snap = await db.collection('notifications')
+                        .where('toUserId', '==', currentUser.uid)
+                        .where('read', '==', false)
+                        .get();
+                    const batch = db.batch();
+                    snap.forEach(d => batch.update(d.ref, { read: true }));
+                    await batch.commit();
+                    showToast('All notifications marked as read', 'success', 1500);
+                } catch (err) {
+                    handleFirestoreError(err);
+                }
+            });
 
             // ============================================================
             // STORIES
@@ -2612,7 +2957,7 @@
             });
 
             // ============================================================
-            // FEED
+            // FEED (NO COMMENTS)
             // ============================================================
             function loadFeed() {
                 if (!currentUser) return;
@@ -2661,7 +3006,6 @@
                 const likes = post.likes || [];
                 const likeCount = likes.length;
                 const isLiked = currentUser && likes.includes(currentUser.uid);
-                const comments = post.comments || [];
                 const createdAt = post.createdAt;
 
                 let imgHtml = '';
@@ -2677,7 +3021,6 @@
                   <div class="name" data-uid="${post.userId}">${userName}</div>
                   <div class="time">${createdAt ? timeAgo(createdAt) : ''}</div>
                 </div>
-                <button class="mute-btn" data-pid="${post.id}" title="Mute post">🔕</button>
               </div>
               ${content ? `<div class="post-content">${escapeHtml(content)}</div>` : ''}
               ${imgHtml}
@@ -2686,25 +3029,6 @@
                   <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                   <span>${likeCount}</span>
                 </button>
-                <button data-action="comment-toggle" data-pid="${post.id}">
-                  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                  <span>${comments.length}</span>
-                </button>
-              </div>
-              <div class="comments-section" data-pid="${post.id}" style="display:none;">
-                <div class="comment-input">
-                  <input placeholder="Write a comment..." />
-                  <button data-action="comment" data-pid="${post.id}">Send</button>
-                </div>
-                <div class="comments-list">
-                  ${comments.map(c => `
-                    <div class="comment-item">
-                      <span class="cname" data-uid="${c.userId}">${c.userName || 'User'}</span>
-                      <span class="ctext">${escapeHtml(c.text)}</span>
-                      <span class="ctime">${c.createdAt ? timeAgo(c.createdAt) : ''}</span>
-                    </div>
-                  `).join('')}
-                </div>
               </div>
             `;
 
@@ -2747,60 +3071,6 @@
                     } catch (err) {
                         handleFirestoreError(err);
                     }
-                });
-
-                card.querySelector('[data-action="comment-toggle"]').addEventListener('click', function() {
-                    const pid = this.dataset.pid;
-                    const section = card.querySelector(`.comments-section[data-pid="${pid}"]`);
-                    section.style.display = section.style.display === 'none' ? 'block' : 'none';
-                    if (section.style.display === 'block') {
-                        section.querySelector('input').focus();
-                    }
-                });
-
-                card.querySelector('[data-action="comment"]').addEventListener('click', async function() {
-                    const pid = this.dataset.pid;
-                    const input = this.closest('.comment-input').querySelector('input');
-                    const text = input.value.trim();
-                    if (!text) return;
-                    input.value = '';
-                    try {
-                        const postRef = db.collection('posts').doc(pid);
-                        await postRef.update({
-                            comments: firebase.firestore.FieldValue.arrayUnion({
-                                userId: currentUser.uid,
-                                userName: currentUserData?.displayName || 'User',
-                                text: text,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            })
-                        });
-                        const postSnap = await postRef.get();
-                        const pData = postSnap.data();
-                        if (pData && pData.userId !== currentUser.uid) {
-                            await db.collection('notifications').add({
-                                toUserId: pData.userId,
-                                fromUserId: currentUser.uid,
-                                fromUserName: currentUserData?.displayName || 'User',
-                                type: 'comment',
-                                postId: pid,
-                                read: false,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        }
-                    } catch (err) {
-                        handleFirestoreError(err);
-                    }
-                });
-
-                card.querySelector('.comment-input input').addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        this.closest('.comment-input').querySelector('[data-action="comment"]').click();
-                    }
-                });
-
-                card.querySelector('.mute-btn').addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    showToast('🔕 Post muted (local)', 'info', 1500);
                 });
 
                 return card;
@@ -2863,52 +3133,53 @@
             });
 
             // ============================================================
-            // REELS — FIXED: random order, no auto-scroll to top, 30MB limit
+            // REELS — GRANULAR UPDATES
             // ============================================================
             function loadReels() {
                 if (!currentUser) return;
                 if (reelsUnsub) { reelsUnsub();
                     reelsUnsub = null; }
-
-                // Remove any previous scroll handler that auto-scrolls to top
-                reelsContainer.removeEventListener('scroll', reelsContainer._loopHandler);
-                reelsContainer._loopHandler = null;
+                reelElements.clear();
 
                 const reelsRef = db.collection('reels')
                     .orderBy('createdAt', 'desc')
                     .limit(50);
 
+                let isFirstLoad = true;
+
                 reelsUnsub = reelsRef.onSnapshot(snap => {
-                    lastReelSnapshot = snap;
-                    renderReels(snap);
+                    if (isFirstLoad) {
+                        isFirstLoad = false;
+                        renderReelsFull(snap);
+                    } else {
+                        updateReelsGranular(snap);
+                    }
                 }, err => {
                     console.warn('Reels error:', err);
                     showIndexBanner(err);
                     reelsContainer.innerHTML =
                         `<div style="color:#fff;text-align:center;padding:40px;">⚠️ Error loading reels</div>`;
                 });
-
-                // ===== No auto-scroll-to-top handler =====
-                // We intentionally do NOT add a scroll listener that forces scroll to top.
-                // The user can scroll freely.
             }
 
-            function renderReels(snap) {
+            function renderReelsFull(snap) {
                 const container = reelsContainer;
                 container.innerHTML = '';
+                reelElements.clear();
+
                 if (snap.empty) {
                     container.innerHTML =
                         `<div style="color:#fff;text-align:center;padding:60px;font-size:16px;">No reels yet. Upload one! 🎬</div>`;
                     return;
                 }
 
-                // ===== SHUFFLE: random order every time =====
                 const docs = shuffleArray(snap.docs);
 
                 docs.forEach(doc => {
                     const reel = { id: doc.id, ...doc.data() };
                     const item = createReelItem(reel);
                     container.appendChild(item);
+                    reelElements.set(reel.id, item);
                 });
 
                 if (reelsObserver) { reelsObserver.disconnect(); }
@@ -2928,16 +3199,62 @@
                     reelsObserver.observe(el);
                 });
 
-                // Apply global mute
                 updateAllReelsMute();
 
-                // ===== If we have reels, ensure the first one plays =====
                 const firstVideo = container.querySelector('video');
                 if (firstVideo) {
                     setTimeout(() => {
                         firstVideo.play().catch(() => {});
                     }, 300);
                 }
+            }
+
+            function updateReelsGranular(snap) {
+                snap.docChanges().forEach(change => {
+                    const doc = change.doc;
+                    const reelId = doc.id;
+                    const data = doc.data();
+                    const el = reelElements.get(reelId);
+
+                    if (change.type === 'removed') {
+                        if (el) { el.remove();
+                            reelElements.delete(reelId); }
+                        return;
+                    }
+
+                    if (!el) {
+                        const newItem = createReelItem({ id: reelId, ...data });
+                        const container = reelsContainer;
+                        container.insertBefore(newItem, container.firstChild);
+                        reelElements.set(reelId, newItem);
+                        if (reelsObserver) reelsObserver.observe(newItem);
+                        return;
+                    }
+
+                    const likeCount = (data.likes || []).length;
+                    const isLiked = currentUser && (data.likes || []).includes(currentUser.uid);
+                    const likeBtn = el.querySelector('.reel-like-big');
+                    const countSpan = likeBtn?.querySelector('.like-count');
+                    if (countSpan) countSpan.textContent = likeCount;
+                    if (likeBtn) {
+                        likeBtn.classList.toggle('liked', isLiked);
+                    }
+                    const captionEl = el.querySelector('.reel-caption');
+                    if (captionEl) {
+                        const newCaption = data.caption || '';
+                        if (captionEl.textContent !== newCaption) {
+                            captionEl.textContent = newCaption;
+                        }
+                    }
+                    const userEl = el.querySelector('.reel-user .name');
+                    if (userEl && data.userName) {
+                        userEl.textContent = data.userName;
+                    }
+                    const avatarEl = el.querySelector('.reel-user .avatar');
+                    if (avatarEl && data.userPhoto) {
+                        avatarEl.src = data.userPhoto;
+                    }
+                });
             }
 
             function createReelItem(reel) {
@@ -2963,12 +3280,12 @@
                   <span class="name">${userName}</span>
                 </div>
                 ${caption ? `<div class="reel-caption">${escapeHtml(caption)}</div>` : ''}
-                <div class="reel-actions">
-                  <button class="${isLiked ? 'liked' : ''}" data-action="reel-like" data-rid="${reel.id}">
-                    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    <span>${likeCount}</span>
-                  </button>
-                </div>
+              </div>
+              <!-- BIG LIKE BUTTON – TOP-RIGHT -->
+              <div class="reel-like-big ${isLiked ? 'liked' : ''}" data-rid="${reel.id}">
+                <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <span class="like-count">${likeCount}</span>
+                <span class="like-label">Like</span>
               </div>
             `;
 
@@ -2994,7 +3311,8 @@
                     }
                 });
 
-                item.querySelector('[data-action="reel-like"]').addEventListener('click', async function(e) {
+                const likeBig = item.querySelector('.reel-like-big');
+                likeBig.addEventListener('click', async function(e) {
                     e.stopPropagation();
                     const rid = this.dataset.rid;
                     const isLikedNow = this.classList.contains('liked');
@@ -3015,7 +3333,8 @@
                                     type: 'like',
                                     postId: rid,
                                     read: false,
-                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                    createdAt: firebase.firestore.FieldValue
+                                    .serverTimestamp()
                                 });
                             }
                         }
@@ -3065,7 +3384,6 @@
                 const prog = $('reelProgress');
 
                 try {
-                    // ===== NEW: Check file size (30MB max) instead of duration =====
                     const sizeMB = checkReelFileSize(file);
                     btn.textContent = `Uploading (${sizeMB.toFixed(1)} MB)...`;
                     const result = await uploadToCloudinary(file, (p) => { prog.style.width = p + '%'; });
@@ -3427,7 +3745,7 @@
             });
 
             // ============================================================
-            // QUICK CHAT ROW
+            // QUICK CHAT
             // ============================================================
             async function loadQuickChatRow() {
                 if (!currentUser) return;
@@ -3486,7 +3804,7 @@
             }
 
             // ============================================================
-            // PROFILE
+            // PROFILE (original layout, no dashboard grid)
             // ============================================================
             function loadProfile(uid) {
                 if (!uid) {
@@ -3536,6 +3854,7 @@
                   <div class="profile-actions">
                     ${isOwn ? `
                       <button class="edit-btn" id="editProfileBtn">Edit Profile</button>
+                      <button class="dashboard-btn" id="dashboardBtn">📊 Dashboard</button>
                       <button class="logout-btn" id="logoutBtn">Logout</button>
                     ` : `
                       <button class="follow-btn ${isFollowing ? 'following' : ''}" id="profileFollowBtn">${isFollowing ? 'Following' : 'Follow'}</button>
@@ -3557,6 +3876,12 @@
                             avatarEl.style.cursor = 'pointer';
                             avatarEl.addEventListener('click', () => {
                                 document.getElementById('editPhotoFile').click();
+                            });
+                        }
+                        const dashboardBtn = document.getElementById('dashboardBtn');
+                        if (dashboardBtn) {
+                            dashboardBtn.addEventListener('click', () => {
+                                switchTab('dashboard');
                             });
                         }
                     }
@@ -3692,10 +4017,6 @@
                         <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                         <span>${likeCount}</span>
                       </button>
-                      <button data-action="pp-comment" data-pid="${doc.id}">
-                        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                        <span>${(data.comments || []).length}</span>
-                      </button>
                     </div>
                   `;
                         } else if (tab === 'reels') {
@@ -3750,10 +4071,6 @@
                             }
                         });
 
-                        div.querySelector('[data-action="pp-comment"]')?.addEventListener('click', function() {
-                            showToast('💬 Open in feed to comment', 'info', 1500);
-                        });
-
                         div.querySelectorAll('.pp-avatar, .pp-name').forEach(el => {
                             el.addEventListener('click', () => {
                                 const uid2 = el.dataset.uid || el.getAttribute('data-uid');
@@ -3777,6 +4094,102 @@
                     showIndexBanner(err);
                 }
             }
+
+            // ============================================================
+            // DASHBOARD
+            // ============================================================
+            async function loadDashboard() {
+                if (!currentUser) {
+                    dashboardContent.innerHTML = '<div class="empty-state">Please log in.</div>';
+                    return;
+                }
+
+                dashboardContent.innerHTML = '<div class="empty-state">Loading dashboard...</div>';
+
+                try {
+                    const uid = currentUser.uid;
+                    const [postsSnap, reelsSnap, followsSnap, followersSnap] = await Promise.all([
+                        db.collection('posts').where('userId', '==', uid).get(),
+                        db.collection('reels').where('userId', '==', uid).get(),
+                        db.collection('follows').where('followerId', '==', uid).get(),
+                        db.collection('follows').where('followingId', '==', uid).get()
+                    ]);
+
+                    const postCount = postsSnap.size;
+                    const reelCount = reelsSnap.size;
+                    const followingCount = followsSnap.size;
+                    const followerCount = followersSnap.size;
+
+                    let totalLikes = 0;
+                    let totalComments = 0;
+                    postsSnap.forEach(d => {
+                        const p = d.data();
+                        totalLikes += (p.likes || []).length;
+                        totalComments += (p.comments || []).length;
+                    });
+                    reelsSnap.forEach(d => {
+                        const r = d.data();
+                        totalLikes += (r.likes || []).length;
+                    });
+                    const engagement = totalLikes + totalComments;
+
+                    // Render stats
+                    dashboardContent.innerHTML = `
+                <div class="stats-grid">
+                  <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-number">${postCount}</div><div class="stat-label">Posts</div></div>
+                  <div class="stat-card"><div class="stat-icon">🎬</div><div class="stat-number">${reelCount}</div><div class="stat-label">Reels</div></div>
+                  <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-number">${followerCount}</div><div class="stat-label">Followers</div></div>
+                  <div class="stat-card"><div class="stat-icon">🔁</div><div class="stat-number">${followingCount}</div><div class="stat-label">Following</div></div>
+                  <div class="stat-card"><div class="stat-icon">❤️</div><div class="stat-number">${totalLikes}</div><div class="stat-label">Total Likes</div></div>
+                  <div class="stat-card"><div class="stat-icon">💬</div><div class="stat-number">${totalComments}</div><div class="stat-label">Comments</div></div>
+                </div>
+                <div class="chart-container">
+                  <canvas id="dashboardChart"></canvas>
+                </div>
+                <div style="text-align:center;color:var(--gray);font-size:13px;margin-top:4px;">Engagement: ${engagement} total interactions</div>
+              `;
+
+                    // Create chart
+                    const ctx = document.getElementById('dashboardChart').getContext('2d');
+                    if (chartInstance) chartInstance.destroy();
+                    chartInstance = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Posts', 'Reels'],
+                            datasets: [{
+                                data: [postCount, reelCount],
+                                backgroundColor: ['#e9407a', '#f8d4e0'],
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: '#1c1c1e',
+                                        font: { size: 12 }
+                                    }
+                                }
+                            },
+                            cutout: '70%'
+                        }
+                    });
+
+                } catch (err) {
+                    console.warn('Dashboard error:', err);
+                    dashboardContent.innerHTML =
+                        `<div class="empty-state" style="color:var(--gray);">Failed to load dashboard data.</div>`;
+                    showIndexBanner(err);
+                }
+            }
+
+            dashboardBackBtn.addEventListener('click', () => {
+                switchTab('profile');
+            });
 
             // ============================================================
             // EDIT PROFILE
